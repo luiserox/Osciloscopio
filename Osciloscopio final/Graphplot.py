@@ -120,20 +120,20 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
 					for cont in range(100):
 						x.append(self.buffact*2*((i-2) + (cont)/100)) #Crear el eje x
 					if(i > 1/(self.buffact*2)): 
-						self.buffready=1
+						self.buffready=1 #Marca de que se llenó inicialmente el buffer
 
-				else:   
-					del y_An1[:100];
+				else:   #Borrar 100 datos viejos
+					del y_An1[:100];  
 					del y_An2[:100];
 					del y_Dig1[:100];
 					del y_Dig2[:100];
 
-				(dataAn1,dataAn2,dataDig1,dataDig2) =  self.leer()
-				dataAn1 = map(lambda x: x*3/4095, dataAn1)
+				(dataAn1,dataAn2,dataDig1,dataDig2) =  self.leer() #Llamado a función leer del serial
+				dataAn1 = map(lambda x: x*3/4095, dataAn1) #Mapear los datos a la escala deseada
 				dataAn2 = map(lambda x: x*3/4095, dataAn2)
 				dataDig1 = map(lambda x: x*3/128, dataDig1)
 				dataDig2 = map(lambda x: x*3/128, dataDig2)
-				y_An1.extend(dataAn1)
+				y_An1.extend(dataAn1) #Extender el vector de datos con los 100 datos nuevos
 				y_An2.extend(dataAn2)
 				y_Dig1.extend(dataDig1)
 				y_Dig2.extend(dataDig2)
@@ -216,17 +216,17 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
 			self.ax.axes.set_ylim(0,3)
 
 	def leer(self):
-	#ser = serial.Serial('/dev/ttyUSB0', 115200)
-		cabec= ser.read()
-		while (cabec > b'\x80'):
-			cabec = ser.read(1)
-		rest = ser.read(399)
+		cabec= ser.read() #Leer un byte del puerto serial
+		while (cabec > b'\x80'): #Revisar si es la cabecera del paquete de datos (Si el MSB es 0)
+			cabec = ser.read(1) #Caso contrario leer otro byte
+		rest = ser.read(399) #Luego leer otros 399 bytes para completar 100 empaquetados
 
-		dataAn1 = [((ord(cabec) & 63)<<6)|(rest[0] & 63)]
+		dataAn1 = [((ord(cabec) & 63)<<6)|(rest[0] & 63)] #Crear los bloques de información
 		dataAn2 = []
 		dataDig1 = []
 		dataDig2 = []
 
+		#Hacer desempaquetado
 		for x in range(99):
 			dataAn1 += [(((rest[4*x+3] & 63)<<6)|(rest[4*(x+1)] & 63))]
 
@@ -238,7 +238,7 @@ class MyApp(QtGui.QMainWindow, Ui_MainWindow):
 		return (dataAn1,dataAn2,dataDig1,dataDig2)
 	
 
-#No tocar, requerimientos de Pyqt
+#Abrir la ventana y ejecutar el osciloscopio
 if __name__ == "__main__":
 	app = QtGui.QApplication(sys.argv)
 	window = MyApp()
